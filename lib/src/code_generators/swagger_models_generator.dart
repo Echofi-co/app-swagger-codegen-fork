@@ -1002,7 +1002,7 @@ List<enums.$neededName> ${neededName.camelCase}ListFromJson(
         generateEqualsOverride(generatedProperties, validatedClassName);
 
     final hashCodeOverride =
-        generateEqualsOverride(generatedProperties, validatedClassName);
+        generateHashCodeOverride(generatedProperties, validatedClassName);
 
     final generatedClass = '''
 @JsonSerializable(explicitToJson: true)
