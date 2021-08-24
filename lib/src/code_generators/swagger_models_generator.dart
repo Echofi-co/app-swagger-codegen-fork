@@ -917,7 +917,7 @@ List<String> ${neededName.camelCase}ListToJson(
 }
 
 List<enums.$neededName> ${neededName.camelCase}ListFromJson(
-    List? ${neededName.camelCase}) {
+    List<Object?>? ${neededName.camelCase}) {
 
   if(${neededName.camelCase} == null)
   {
