@@ -1067,9 +1067,9 @@ $copyWithMethod
         .join(',');
 
     return '''
-@override
+  @override
   int get hashCode {
-    ${splittedProperties.length == 1 ? hashes : 'hashValues($hashes)'}
+    return ${splittedProperties.length == 1 ? hashes : 'hashValues($hashes)'};
   }
     ''';
   }
