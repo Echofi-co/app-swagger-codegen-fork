@@ -1,5 +1,5 @@
-import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:recase/recase.dart';
+import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:swagger_dart_code_generator/src/extensions/file_name_extensions.dart';
 import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 
@@ -160,13 +160,13 @@ class \$CustomJsonDecoder {
   T _decodeMap<T>(Map<String, dynamic> values) {
     final jsonFactory = factories[T];
     if (jsonFactory == null || jsonFactory is! \$JsonFactory<T>) {
-      return throw "Could not find factory for type \$T. Is '\$T: \$T.fromJsonFactory' included in the CustomJsonDecoder instance creation in bootstrapper.dart?";
+      return throw ArgumentError("Could not find factory for type \$T. Is '\$T: \$T.fromJsonFactory' included in the CustomJsonDecoder instance creation in bootstrapper.dart?");
     }
 
     return jsonFactory(values);
   }
 
-  List<T> _decodeList<T>(Iterable values) =>
+  List<T> _decodeList<T>(Iterable<Object?> values) =>
       values.where((v) => v != null).map<T>((v) => decode<T>(v) as T).toList();
 }
 
