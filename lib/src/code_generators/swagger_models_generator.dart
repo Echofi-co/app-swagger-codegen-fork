@@ -1001,13 +1001,10 @@ List<enums.$neededName> ${neededName.camelCase}ListFromJson(
     final equalsOverride =
         generateEqualsOverride(generatedProperties, validatedClassName);
 
-    final hashCodeOverride = generateHashCodeOverride(generatedProperties);
-
     final generatedClass = '''
-@immutable
 @JsonSerializable(explicitToJson: true)
 class $validatedClassName $extendsString{
-\tconst $validatedClassName($generatedConstructorProperties);\n
+\t$validatedClassName($generatedConstructorProperties);\n
 \tfactory $validatedClassName.fromJson(Map<String, dynamic> json) => _\$${validatedClassName}FromJson(json);\n
 $generatedProperties
 \tstatic const fromJsonFactory = _\$${validatedClassName}FromJson;
@@ -1015,7 +1012,6 @@ $generatedProperties
 \tMap<String, dynamic> toJson() => _\$${validatedClassName}ToJson(this);
 
 $equalsOverride
-$hashCodeOverride
 }
 $copyWithMethod
 ''';
