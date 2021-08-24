@@ -83,7 +83,7 @@ $maps};
     int compareImport(String a, String b) {
       if (isPackageImport(a)) {
         if (isPackageImport(b)) {
-          return 0;
+          return a.compareTo(b);
         } else {
           return -1;
         }
