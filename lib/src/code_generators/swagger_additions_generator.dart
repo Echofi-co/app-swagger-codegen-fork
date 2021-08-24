@@ -1,5 +1,5 @@
-import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:recase/recase.dart';
+import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:swagger_dart_code_generator/src/extensions/file_name_extensions.dart';
 import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 
@@ -36,7 +36,7 @@ class SwaggerAdditionsGenerator {
     final imports = <String>[];
     buildExtensions.keys.forEach((String key) {
       final className =
-          "${getClassNameFromFileName(key.split('/').last)}$converterClassEnding";
+          "${getClassNameFromFileName(key.split('/').last).camelCase}$converterClassEnding";
 
       final fileName = key.split('/').last.replaceAll('.json', '.swagger');
       maps.writeln('  ...$className,');
@@ -47,7 +47,6 @@ class SwaggerAdditionsGenerator {
 
     final mapping = '''
 ${imports.join('\n')}
-
 final Map<Type, Object Function(Map<String, dynamic>)> $mappingVariableName = {
 $maps};
 ''';
@@ -63,38 +62,21 @@ $maps};
     final chopperPartImport =
         buildOnlyModels ? '' : "part '$swaggerFileName.swagger.chopper.dart';";
 
-    final chopperImports = buildOnlyModels
-        ? ''
-        : '''import 'package:chopper/chopper.dart';
-import 'package:chopper/chopper.dart' as chopper;''';
+    final imports = <String>{
+      if (!buildOnlyModels) ...[
+        "import 'package:chopper/chopper.dart';",
+        "import 'package:chopper/chopper.dart' as chopper;",
+      ],
+      if (hasEnums) "import '$swaggerFileName.enums.swagger.dart' as enums;",
+      "import 'package:json_annotation/json_annotation.dart';",
+      if (hasModels) ...[
+        "import 'package:json_annotation/json_annotation.dart';",
+        "import 'package:collection/collection.dart';",
+        "import 'package:meta/meta.dart';",
+      ],
+    };
 
-    final enumsImport = hasEnums
-        ? "import '$swaggerFileName.enums.swagger.dart' as enums;"
-        : '';
-
-    final enumsExport =
-        hasEnums ? "export '$swaggerFileName.enums.swagger.dart';" : '';
-
-    result.writeln("""
-import 'package:json_annotation/json_annotation.dart';""");
-
-    if (hasModels) {
-      result.writeln("""
-import 'package:json_annotation/json_annotation.dart';
-import 'package:collection/collection.dart';
-""");
-    }
-
-    if (chopperImports.isNotEmpty) {
-      result.write(chopperImports);
-    }
-    if (enumsImport.isNotEmpty) {
-      result.write(enumsImport);
-    }
-
-    if (enumsExport.isNotEmpty) {
-      result.write(enumsExport);
-    }
+    result.write('${(imports.toList()..sort()).join('\n')}');
 
     result.write('\n\n');
 
@@ -160,13 +142,13 @@ class \$CustomJsonDecoder {
   T _decodeMap<T>(Map<String, dynamic> values) {
     final jsonFactory = factories[T];
     if (jsonFactory == null || jsonFactory is! \$JsonFactory<T>) {
-      return throw "Could not find factory for type \$T. Is '\$T: \$T.fromJsonFactory' included in the CustomJsonDecoder instance creation in bootstrapper.dart?";
+      return throw ArgumentError("Could not find factory for type \$T. Is '\$T: \$T.fromJsonFactory' included in the CustomJsonDecoder instance creation in bootstrapper.dart?");
     }
 
     return jsonFactory(values);
   }
 
-  List<T> _decodeList<T>(Iterable values) =>
+  List<T> _decodeList<T>(Iterable<Object?> values) =>
       values.where((v) => v != null).map<T>((v) => decode<T>(v) as T).toList();
 }
 
@@ -179,13 +161,13 @@ class \$JsonSerializableConverter extends chopper.JsonConverter {
       return chopper.Response(response.base, null, error: response.error);
     }
 
-    final jsonRes = super.convertResponse(response);
+    final jsonRes = super.convertResponse<ResultType, Item>(response);
     return jsonRes.copyWith<ResultType>(
         body: \$jsonDecoder.decode<Item>(jsonRes.body) as ResultType);
   }
 }
 
-final \$jsonDecoder = \$CustomJsonDecoder(${fileName.pascalCase}JsonDecoderMappings);
+final \$jsonDecoder = \$CustomJsonDecoder(${fileName.camelCase}JsonDecoderMappings);
     ''';
   }
 

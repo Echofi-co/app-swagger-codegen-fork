@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:swagger_dart_code_generator/src/code_generators/constants.dart';
-import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 import 'package:recase/recase.dart';
+import 'package:swagger_dart_code_generator/src/code_generators/constants.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/v2/swagger_enums_generator_v2.dart';
-import 'package:swagger_dart_code_generator/src/extensions/string_extension.dart';
 import 'package:swagger_dart_code_generator/src/exception_words.dart';
+import 'package:swagger_dart_code_generator/src/extensions/string_extension.dart';
+import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 
 import 'constants.dart';
 
@@ -1001,10 +1001,13 @@ List<enums.$neededName> ${neededName.camelCase}ListFromJson(
     final equalsOverride =
         generateEqualsOverride(generatedProperties, validatedClassName);
 
+    final hashCodeOverride = generateHashCodeOverride(generatedProperties);
+
     final generatedClass = '''
+@immutable
 @JsonSerializable(explicitToJson: true)
 class $validatedClassName $extendsString{
-\t$validatedClassName($generatedConstructorProperties);\n
+\tconst $validatedClassName($generatedConstructorProperties);\n
 \tfactory $validatedClassName.fromJson(Map<String, dynamic> json) => _\$${validatedClassName}FromJson(json);\n
 $generatedProperties
 \tstatic const fromJsonFactory = _\$${validatedClassName}FromJson;
@@ -1012,6 +1015,7 @@ $generatedProperties
 \tMap<String, dynamic> toJson() => _\$${validatedClassName}ToJson(this);
 
 $equalsOverride
+$hashCodeOverride
 }
 $copyWithMethod
 ''';
@@ -1043,6 +1047,26 @@ $copyWithMethod
     return identical(this, other) ||
         (other is $validatedClassName &&
             $checks);
+  }
+    ''';
+  }
+
+  String generateHashCodeOverride(String generatedProperties) {
+    final splittedProperties = generatedProperties
+        .split(';')
+        .where((element) => element.isNotEmpty)
+        .map((e) => e.substring(e.indexOf('final ') + 6))
+        .map((e) => e.split(' ')[1])
+        .toList();
+
+    if (splittedProperties.isEmpty) {
+      return '';
+    }
+
+    return '''
+  @override
+  int get hashCode {
+    return const DeepCollectionEquality().hash([${splittedProperties.join(', ')}]);
   }
     ''';
   }

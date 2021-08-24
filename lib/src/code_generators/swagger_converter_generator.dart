@@ -1,14 +1,15 @@
 import 'dart:convert';
+
+import 'package:recase/recase.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_models_generator.dart';
 import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:swagger_dart_code_generator/src/extensions/string_extension.dart';
-import 'package:recase/recase.dart';
 import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 
 class SwaggerConverterGenerator {
   String generate(String dartCode, String fileName, GeneratorOptions options) {
     return '''
-final Map<Type, Object Function(Map<String, dynamic>)> ${fileName.pascalCase}$converterClassEnding = 
+final Map<Type, Object Function(Map<String, dynamic>)> ${fileName.camelCase}$converterClassEnding = 
 {
 ${_generateModelsMapping(dartCode, options)}};''';
   }
