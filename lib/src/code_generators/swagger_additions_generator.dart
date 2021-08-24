@@ -76,7 +76,25 @@ $maps};
       ],
     };
 
-    result.write('${(imports.toList()..sort()).join('\n')}');
+    bool isPackageImport(String import) {
+      return import.startsWith("import 'package:");
+    }
+
+    int compareImport(String a, String b) {
+      if (isPackageImport(a)) {
+        if (isPackageImport(b)) {
+          return 0;
+        } else {
+          return -1;
+        }
+      } else if (isPackageImport(b)) {
+        return 1;
+      } else {
+        return a.compareTo(b);
+      }
+    }
+
+    result.write('${(imports.toList()..sort(compareImport)).join('\n')}');
 
     result.write('\n\n');
 
