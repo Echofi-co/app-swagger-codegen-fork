@@ -1001,6 +1001,8 @@ List<enums.$neededName> ${neededName.camelCase}ListFromJson(
     final equalsOverride =
         generateEqualsOverride(generatedProperties, validatedClassName);
 
+    final hashCodeOverride = generateHashCodeOverride(generatedProperties);
+
     final generatedClass = '''
 @JsonSerializable(explicitToJson: true)
 class $validatedClassName $extendsString{
@@ -1012,6 +1014,7 @@ $generatedProperties
 \tMap<String, dynamic> toJson() => _\$${validatedClassName}ToJson(this);
 
 $equalsOverride
+$hashCodeOverride
 }
 $copyWithMethod
 ''';
