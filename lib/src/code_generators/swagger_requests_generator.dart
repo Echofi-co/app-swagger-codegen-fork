@@ -88,7 +88,7 @@ class SwaggerRequestsGenerator {
           Parameter(
             (p) => p
               ..named = true
-              ..required = options.withBaseUrl
+              ..required = !options.withBaseUrl
               ..type = Reference('String')
               ..name = 'baseUrl'
               ..defaultTo = options.withBaseUrl
