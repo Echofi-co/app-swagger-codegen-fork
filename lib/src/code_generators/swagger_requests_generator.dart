@@ -100,7 +100,7 @@ class SwaggerRequestsGenerator {
               ..named = true
               ..type = Reference('Iterable')
               ..name = 'interceptors'
-              ..defaultTo = Code('const []'),
+              ..defaultTo = Code('const <Object?>[]'),
           ),
         ])
         ..body = Code(body),
