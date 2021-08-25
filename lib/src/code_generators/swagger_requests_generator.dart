@@ -1,19 +1,19 @@
 import 'dart:convert';
 
 import 'package:code_builder/code_builder.dart';
+import 'package:collection/collection.dart';
+import 'package:recase/recase.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_additions_generator.dart';
-import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_models_generator.dart';
+import 'package:swagger_dart_code_generator/src/extensions/parameter_extensions.dart';
 import 'package:swagger_dart_code_generator/src/extensions/string_extension.dart';
+import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/requests/swagger_request.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/requests/swagger_request_parameter.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/responses/swagger_response.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/responses/swagger_schema.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/swagger_path.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/swagger_root.dart';
-import 'package:recase/recase.dart';
-import 'package:collection/collection.dart';
-import 'package:swagger_dart_code_generator/src/extensions/parameter_extensions.dart';
 
 import 'constants.dart';
 
@@ -50,15 +50,13 @@ class SwaggerRequestsGenerator {
 
     final chopperClient = SwaggerAdditionsGenerator.getChopperClientContent(
       className,
-      swaggerRoot.host,
-      swaggerRoot.basePath,
       options,
     );
 
     return Class(
       (c) => c
         ..methods.addAll([
-          _generateCreateMethod(className, chopperClient),
+          _generateCreateMethod(className, chopperClient, options, swaggerRoot),
           ...allMethodsContent
         ])
         ..extend = Reference(kChopperService)
@@ -69,20 +67,35 @@ class SwaggerRequestsGenerator {
     );
   }
 
-  Method _generateCreateMethod(String className, String body) {
+  Method _generateCreateMethod(
+    String className,
+    String body,
+    GeneratorOptions options,
+    SwaggerRoot swaggerRoot,
+  ) {
     return Method(
       (m) => m
         ..returns = Reference(className)
         ..name = 'create'
         ..static = true
-        ..optionalParameters.add(
+        ..optionalParameters.addAll([
           Parameter(
             (p) => p
-              ..named = false
+              ..named = true
               ..type = Reference('ChopperClient?')
               ..name = 'client',
           ),
-        )
+          Parameter(
+            (p) => p
+              ..named = true
+              ..required = options.withBaseUrl
+              ..type = Reference('String')
+              ..name = 'baseUrl'
+              ..defaultTo = options.withBaseUrl
+                  ? Code('https://${swaggerRoot.host}${swaggerRoot.basePath}')
+                  : null,
+          ),
+        ])
         ..body = Code(body),
     );
   }

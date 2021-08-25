@@ -169,14 +169,8 @@ final \$jsonDecoder = \$CustomJsonDecoder(${fileName.camelCase}JsonDecoderMappin
 
   static String getChopperClientContent(
     String className,
-    String host,
-    String basePath,
     GeneratorOptions options,
   ) {
-    final baseUrlString = options.withBaseUrl
-        ? "baseUrl:  'https://$host$basePath'"
-        : '/*baseUrl: YOUR_BASE_URL*/';
-
     final converterString = options.withConverter
         ? 'converter: \$JsonSerializableConverter(),'
         : 'converter: chopper.JsonConverter(),';
@@ -189,7 +183,7 @@ final \$jsonDecoder = \$CustomJsonDecoder(${fileName.camelCase}JsonDecoderMappin
     final newClient = ChopperClient(
       services: [_\$$className()],
       $converterString
-      $baseUrlString);
+      baseUrl: baseUrl);
     return _\$$className(newClient);
 ''';
     return chopperClientBody;
