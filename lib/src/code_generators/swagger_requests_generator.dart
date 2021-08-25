@@ -102,6 +102,12 @@ class SwaggerRequestsGenerator {
               ..name = 'interceptors'
               ..defaultTo = Code('const <Object?>[]'),
           ),
+          Parameter(
+            (p) => p
+              ..named = true
+              ..type = Reference('http.Client?')
+              ..name = 'client',
+          ),
         ])
         ..body = Code(body),
     );

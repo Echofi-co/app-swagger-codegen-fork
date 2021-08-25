@@ -185,6 +185,7 @@ final \$jsonDecoder = \$CustomJsonDecoder(${fileName.camelCase}JsonDecoderMappin
       $converterString
       baseUrl: baseUrl,
       interceptors: interceptors,
+      client: client,
     );
     return _\$$className(newClient);
 ''';
