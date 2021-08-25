@@ -183,7 +183,9 @@ final \$jsonDecoder = \$CustomJsonDecoder(${fileName.camelCase}JsonDecoderMappin
     final newClient = ChopperClient(
       services: [_\$$className()],
       $converterString
-      baseUrl: baseUrl);
+      baseUrl: baseUrl,
+      interceptors: interceptors,
+    );
     return _\$$className(newClient);
 ''';
     return chopperClientBody;

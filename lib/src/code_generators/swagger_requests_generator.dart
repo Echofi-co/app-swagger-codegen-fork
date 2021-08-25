@@ -95,6 +95,13 @@ class SwaggerRequestsGenerator {
                   ? Code('https://${swaggerRoot.host}${swaggerRoot.basePath}')
                   : null,
           ),
+          Parameter(
+            (p) => p
+              ..named = true
+              ..type = Reference('Iterable')
+              ..name = 'interceptors'
+              ..defaultTo = Code('const []'),
+          ),
         ])
         ..body = Code(body),
     );
