@@ -2,6 +2,7 @@ import 'package:recase/recase.dart';
 import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:swagger_dart_code_generator/src/extensions/file_name_extensions.dart';
 import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
+import 'package:swagger_dart_code_generator/src/utils/sort_imports.dart';
 
 ///Generates index file content, converter and additional methods
 class SwaggerAdditionsGenerator {
@@ -43,10 +44,8 @@ class SwaggerAdditionsGenerator {
       imports.add("import '${fileName.replaceAll('-', '_')}.dart';");
     });
 
-    imports.sort();
-
     final mapping = '''
-${imports.join('\n')}
+${sortImports(imports)}
 final Map<Type, Object Function(Map<String, dynamic>)> $mappingVariableName = {
 $maps};
 ''';
@@ -62,7 +61,7 @@ $maps};
     final chopperPartImport =
         buildOnlyModels ? '' : "part '$swaggerFileName.swagger.chopper.dart';";
 
-    final imports = <String>{
+    result.write(sortImports([
       if (!buildOnlyModels) ...[
         "import 'package:chopper/chopper.dart';",
         "import 'package:chopper/chopper.dart' as chopper;",
@@ -70,31 +69,10 @@ $maps};
       if (hasEnums) "import '$swaggerFileName.enums.swagger.dart' as enums;",
       "import 'package:json_annotation/json_annotation.dart';",
       if (hasModels) ...[
-        "import 'package:json_annotation/json_annotation.dart';",
         "import 'package:collection/collection.dart';",
         "import 'package:meta/meta.dart';",
       ],
-    };
-
-    bool isPackageImport(String import) {
-      return import.startsWith("import 'package:");
-    }
-
-    int compareImport(String a, String b) {
-      if (isPackageImport(a)) {
-        if (isPackageImport(b)) {
-          return a.compareTo(b);
-        } else {
-          return -1;
-        }
-      } else if (isPackageImport(b)) {
-        return 1;
-      } else {
-        return a.compareTo(b);
-      }
-    }
-
-    result.write('${(imports.toList()..sort(compareImport)).join('\n')}');
+    ]));
 
     result.write('\n\n');
 
