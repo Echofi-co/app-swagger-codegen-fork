@@ -106,7 +106,7 @@ class SwaggerRequestsGenerator {
             (p) => p
               ..named = true
               ..type = Reference('http.Client?')
-              ..name = 'client',
+              ..name = 'httpClient',
           ),
         ])
         ..body = Code(body),
