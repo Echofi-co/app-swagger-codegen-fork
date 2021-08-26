@@ -62,12 +62,13 @@ $maps};
         buildOnlyModels ? '' : "part '$swaggerFileName.swagger.chopper.dart';";
 
     result.write(sortImports([
+      "import 'package:json_annotation/json_annotation.dart';",
+      "import 'package:http/http.dart' as http;",
       if (!buildOnlyModels) ...[
         "import 'package:chopper/chopper.dart';",
         "import 'package:chopper/chopper.dart' as chopper;",
       ],
       if (hasEnums) "import '$swaggerFileName.enums.swagger.dart' as enums;",
-      "import 'package:json_annotation/json_annotation.dart';",
       if (hasModels) ...[
         "import 'package:collection/collection.dart';",
         "import 'package:meta/meta.dart';",
@@ -185,7 +186,7 @@ final \$jsonDecoder = \$CustomJsonDecoder(${fileName.camelCase}JsonDecoderMappin
       $converterString
       baseUrl: baseUrl,
       interceptors: interceptors,
-      client: client,
+      client: httpClient,
     );
     return _\$$className(newClient);
 ''';
