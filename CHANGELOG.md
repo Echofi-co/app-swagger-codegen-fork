@@ -1,3 +1,68 @@
+# 2.1.3+2
+
+* Fixed Issue ([#245](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/245))
+* Fixed ability to set exclude_path and include_path
+
+# 2.1.3+1
+
+* Fixed Issue ([#248](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/248))
+* Fix cases when responses was named like numbers
+
+# 2.1.3
+
+* Fixed cases when swagger has not put post get requests
+* Added validation for requests names generation
+
+# 2.1.2
+
+* Updated packages json_serializable, json_annotation, build_runner
+
+# 2.1.1+4
+
+* Fix for default value for named parameters
+
+# 2.1.1+3
+
+* Fixed Issue ([#240](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/240))
+* Fixed Issue ([#211](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/211))
+* Fixed cases when parameters named by keywords, for example In, For, Class etx
+* Added generation of parameters from, path (not only from requests)
+
+# 2.1.1+2
+
+* Fixed issues when content has no application/json child
+
+# 2.1.1+1
+
+* Fixed Issue ([#235](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/235))
+* Fixed cases when field number 'number' generated as $num
+* Fixed cases when field 'num' generated ad 'num' (basic dart type)
+
+# 2.1.1
+
+* Stabilized generator
+* Fixed issue when parameters named like int, double etc.
+* Fixed Issue ([#108](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/108))
+
+# 2.1.0-prerelease.9
+
+* Fixed Issue ([#228](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/228))
+* Fixed Issue ([#206](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/206))
+* Fixed cases when file names like some_file.extension.swagger.json.dart.json
+* Removed generation of converter when build_only_models is true
+
+
+# 2.1.0-prerelease.8
+
+* Fixed Issue ([#221](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/221))
+* Added generation of int get hashCode
+* Added example
+
+# 2.1.0-prerelease.7
+
+* Fixed Issue ([#186](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/186))
+* Fixed Issue ([#204](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/204))
+
 # 2.1.0-prerelease.6
 
 * **BREAKING**: Added dollar signs to generated converter and mappings

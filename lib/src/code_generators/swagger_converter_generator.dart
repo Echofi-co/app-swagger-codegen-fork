@@ -5,6 +5,7 @@ import 'package:swagger_dart_code_generator/src/code_generators/swagger_models_g
 import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:swagger_dart_code_generator/src/extensions/string_extension.dart';
 import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
+import 'constants.dart';
 
 class SwaggerConverterGenerator {
   String generate(String dartCode, String fileName, GeneratorOptions options) {
@@ -35,8 +36,7 @@ ${_generateModelsMapping(dartCode, options)}};''';
           continue;
         }
 
-        if (SwaggerModelsGenerator.basicTypes
-            .contains(definition['type'].toString().toLowerCase())) {
+        if (kBasicTypes.contains(definition['type'].toString().toLowerCase())) {
           continue;
         }
 
@@ -75,7 +75,8 @@ ${_generateModelsMapping(dartCode, options)}};''';
           if (schema != null &&
               content!.entries.length == 1 &&
               !schema.containsKey('\$ref')) {
-            final validatedName = key.capitalize + options.modelPostfix;
+            final validatedName = SwaggerModelsGenerator.getValidatedClassName(
+                key.capitalize + options.modelPostfix);
             result.add('\t$validatedName: $validatedName.fromJsonFactory,');
           }
         }

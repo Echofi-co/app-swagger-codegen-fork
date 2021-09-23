@@ -12,7 +12,7 @@ const kBasicTypes = [
   'float',
   'bool',
   'boolean',
-  'number',
+  'num',
 ];
 
 const kChopperService = 'ChopperService';
@@ -20,6 +20,7 @@ const kChopperApi = 'ChopperApi';
 const kResponse = 'Response';
 const kFutureResponse = 'Future<chopper.Response>';
 const kString = 'string';
+const kUndefinedParameter = 'undefinedParameter';
 
 const kResponses = '/responses/';
 
@@ -52,6 +53,10 @@ const kCookie = 'cookie';
 const kArray = 'array';
 const kEnum = 'enum';
 const kBody = 'body';
+
+const kDynamic = 'dynamic';
+
+const supportedRequestTypes = ['get', 'post', 'put', 'delete', 'head'];
 
 const kServiceHeader = '''
 // **************************************************************************

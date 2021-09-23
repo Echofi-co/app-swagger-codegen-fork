@@ -126,6 +126,17 @@ class SwaggerRequestsGenerator {
           return;
         }
 
+        if (options.excludePaths
+            .any((excludePath) => RegExp(excludePath).hasMatch(path))) {
+          return;
+        }
+
+        if (options.includePaths.isNotEmpty &&
+            !options.includePaths
+                .any((includePath) => RegExp(includePath).hasMatch(path))) {
+          return;
+        }
+
         final methodName = _getRequestMethodName(
             requestType: requestType,
             swaggerRequest: swaggerRequest,
@@ -136,6 +147,7 @@ class SwaggerRequestsGenerator {
           swaggerRequest: swaggerRequest,
           ignoreHeaders: options.ignoreHeaders,
           modelPostfix: options.modelPostfix,
+          swaggerPath: swaggerPath,
           path: path,
           requestType: requestType,
           root: swaggerRoot,
@@ -299,8 +311,9 @@ class SwaggerRequestsGenerator {
       case kBody:
         return refer(kBody.pascalCase).call([]);
       default:
+        //https://github.com/lejard-h/chopper/issues/295
         return refer(parameter.inParameter.pascalCase)
-            .call([literalString(parameter.name)]);
+            .call([literalString(parameter.name.replaceAll('\$', ''))]);
     }
   }
 
@@ -379,8 +392,6 @@ class SwaggerRequestsGenerator {
         return (parameter.schema!.ref.getRef() + modelPostfix).asList();
       }
       return (parameter.schema!.ref.getRef() + modelPostfix);
-    } else if (parameter.schema?.ref.isNotEmpty == true) {
-      return parameter.schema!.ref.getRef() + modelPostfix;
     } else if (parameter.schema?.type == kArray &&
         parameter.schema?.items?.type.isNotEmpty == true) {
       return _mapParameterName(parameter.schema!.items!.type, '').asList();
@@ -407,12 +418,13 @@ class SwaggerRequestsGenerator {
     required String modelPostfix,
     required SwaggerRoot root,
     required GeneratorOptions options,
+    required SwaggerPath swaggerPath,
   }) {
     final definedParameters = <String, SwaggerRequestParameter>{};
     definedParameters.addAll(root.parameters);
     definedParameters.addAll(root.components?.parameters ?? {});
 
-    final parameters = swaggerRequest.parameters
+    final parameters = [...swaggerRequest.parameters, ...swaggerPath.parameters]
         .map((par) => definedParameters[par.ref.split('/').last] ?? par)
         .toList();
 
@@ -502,6 +514,18 @@ class SwaggerRequestsGenerator {
     return result.distinctParameters();
   }
 
+  bool _isBasicTypeRef(String ref, SwaggerRoot root) {
+    final schemas = _getAllReusableObjects(root);
+
+    final neededSchema = schemas[ref.getUnformattedRef()];
+
+    if (neededSchema == null) {
+      return false;
+    }
+
+    return kBasicTypes.contains(neededSchema.type);
+  }
+
   bool _isEnumRef(String ref, SwaggerRoot root) {
     final schemas = root.components?.schemas ?? <String, SwaggerSchema>{};
     schemas.addAll(root.definitions);
@@ -535,6 +559,10 @@ class SwaggerRequestsGenerator {
           return ref.asEnum().asList();
         }
 
+        if (_isBasicTypeRef(ref, root)) {
+          return kObject.pascalCase;
+        }
+
         if (ref.isNotEmpty) {
           return SwaggerModelsGenerator.getValidatedClassName(
                   ref.withPostfix(modelPostfix))
@@ -550,6 +578,10 @@ class SwaggerRequestsGenerator {
     if (schema.ref.isNotEmpty) {
       if (_isEnumRef(schema.ref, root)) {
         return schema.ref.getRef().asEnum();
+      }
+
+      if (_isBasicTypeRef(schema.ref, root)) {
+        return kObject.pascalCase;
       }
 
       return SwaggerModelsGenerator.getValidatedClassName(
@@ -579,13 +611,7 @@ class SwaggerRequestsGenerator {
     required String path,
     required String requestType,
   }) {
-    if (options.usePathForRequestNames || swaggerRequest.operationId.isEmpty) {
-      return SwaggerModelsGenerator.generateRequestName(path, requestType);
-    } else {
-      return SwaggerModelsGenerator.getValidatedClassName(
-              swaggerRequest.operationId)
-          .camelCase;
-    }
+    return SwaggerModelsGenerator.generateRequestName(path, requestType);
   }
 
   static SwaggerResponse? getSuccessedResponse({
@@ -644,10 +670,14 @@ class SwaggerRequestsGenerator {
     final ref = swaggerResponse.schema?.ref ?? swaggerResponse.ref;
 
     if (ref.isNotEmpty) {
-      final responses = root.components?.responses ?? {};
-      final neededResponse = responses[ref.getRef()];
+      final allReusableObjects = _getAllReusableObjects(root);
+      final neededResponse = allReusableObjects[ref.getUnformattedRef()];
 
-      if (neededResponse?.ref.isNotEmpty == true) {
+      if (neededResponse == null) {
+        return kObject.pascalCase;
+      }
+
+      if (neededResponse.ref.isNotEmpty) {
         return kObject.pascalCase;
       }
 
@@ -655,6 +685,16 @@ class SwaggerRequestsGenerator {
     }
 
     return null;
+  }
+
+  Map<String, SwaggerSchema> _getAllReusableObjects(SwaggerRoot root) {
+    final results = <String, SwaggerSchema>{};
+    results.addAll(root.definitions);
+    results.addAll(root.components?.schemas ?? {});
+    results.addAll(root.components?.responses ?? {});
+    results.addAll(root.components?.requestBodies ?? {});
+
+    return results;
   }
 
   String? _getReturnTypeFromOriginalRef(
@@ -666,8 +706,11 @@ class SwaggerRequestsGenerator {
     return null;
   }
 
-  String? _getReturnTypeFromContent(
-      SwaggerResponse swaggerResponse, String modelPostfix) {
+  String? _getReturnTypeFromContent({
+    required SwaggerResponse swaggerResponse,
+    required String modelPostfix,
+    required SwaggerRoot swaggerRoot,
+  }) {
     final content = swaggerResponse.content;
 
     if (content == null) {
@@ -682,10 +725,29 @@ class SwaggerRequestsGenerator {
 
     final schemaRef = content.schema?.ref ?? '';
     if (schemaRef.isNotEmpty) {
-      final type =
+      final allRefs = _getAllReusableObjects(swaggerRoot);
+      final neededSchema = allRefs[schemaRef.getUnformattedRef()];
+
+      if (neededSchema == null) {
+        return kObject.pascalCase;
+      }
+
+      if (kBasicTypes.contains(neededSchema.type)) {
+        return kObject.pascalCase;
+      }
+
+      final typeName =
           SwaggerModelsGenerator.getValidatedClassName(schemaRef.getRef())
               .withPostfix(modelPostfix);
-      return kBasicTypesMap[type] ?? type;
+
+      if (neededSchema.type == kArray) {
+        return neededSchema.items?.ref
+            .getRef()
+            .withPostfix(modelPostfix)
+            .asList();
+      }
+
+      return typeName;
     }
 
     final responseType = content.responseType;
@@ -695,14 +757,14 @@ class SwaggerRequestsGenerator {
         final originalRef = swaggerResponse.schema?.items?.originalRef ?? '';
 
         if (originalRef.isNotEmpty) {
-          return kBasicTypesMap[originalRef]!.asList();
+          return kBasicTypesMap[originalRef]?.asList();
         }
       }
     }
 
     final itemsRef = content.items?.ref ?? '';
     if (itemsRef.isNotEmpty) {
-      return kBasicTypesMap[itemsRef]!.withPostfix(modelPostfix).asList();
+      return kBasicTypesMap[itemsRef]?.withPostfix(modelPostfix).asList();
     }
 
     final schemaItemsRef = content.schema?.items?.ref ?? '';
@@ -758,7 +820,11 @@ class SwaggerRequestsGenerator {
     final type = _getReturnTypeFromType(neededResponse, modelPostfix) ??
         _getReturnTypeFromSchema(neededResponse, modelPostfix, swaggerRoot) ??
         _getReturnTypeFromOriginalRef(neededResponse, modelPostfix) ??
-        _getReturnTypeFromContent(neededResponse, modelPostfix) ??
+        _getReturnTypeFromContent(
+          swaggerResponse: neededResponse,
+          modelPostfix: modelPostfix,
+          swaggerRoot: swaggerRoot,
+        ) ??
         '';
 
     if (type.isNotEmpty) {

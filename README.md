@@ -7,6 +7,8 @@ Code partially generated with [chopper](https://pub.dev/packages/chopper)
 # :mega: **Build dart types from Swagger/OpenAPI schemas**
 
 [![pub package](https://img.shields.io/pub/v/swagger_dart_code_generator.svg)](https://pub.dartlang.org/packages/swagger_dart_code_generator)
+![GitHub issues](https://img.shields.io/github/issues-raw/epam-cross-platform-lab/swagger-dart-code-generator?style=flat-square)
+![GitHub last commit](https://img.shields.io/github/last-commit/epam-cross-platform-lab/swagger-dart-code-generator?style=flat-square)
 <a href="https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/actions"><img src="https://img.shields.io/github/workflow/status/epam-cross-platform-lab/swagger-dart-code-generator/CI%20for%20master%20branch/master" alt="build"></a>
 <a href="https://discord.gg/fmkN37"><img src="https://img.shields.io/discord/755005482405462017.svg?logo=discord&color=blue" alt="Discord"></a>
 [![codecov](https://codecov.io/gh/epam-cross-platform-lab/swagger-dart-code-generator/branch/master/graph/badge.svg)](https://codecov.io/gh/epam-cross-platform-lab/swagger-dart-code-generator)
@@ -78,11 +80,11 @@ targets:
 | `with_converter` | `true` | `false` | If option is true, combination of all mappings will be generated. |
 | `ignore_headers` | `false` | `false` | If option is true, headers will not be generated. |
 | `enums_case_sensitive` | `true` | `false` | If value is false, 'enumValue' will be defined like Enum.enumValue even it's json key equals 'ENUMVALUE' |
-| `include_paths` | `[]` | `false` | List<String> If not empty - includes only paths matching reges |
-| `exclude_paths` | `[]` | `false` | List<String> If not empty -exclude paths matching reges |
+| `include_paths` | `[]` | `false` | List<String> of Regex If not empty - includes only paths matching reges |
+| `exclude_paths` | `[]` | `false` | List<String> of Regex If not empty -exclude paths matching reges |
 | `use_default_null_for_lists` | `false` | `false` | If option is true, default value for lists will be null, otherwise - [] |
 | `build_only_models` | `false` | `false` | If option is true, chopper classes will not be generated. |
-| `include_if_null` | `null` | `false` | Enables or disables includeIfNull JsonAnnotation feature and sets value for it. See [IncludeIfNull](#includeIfNull-for-model-generation). |
+| `include_if_null` | `null` | `false` | Sets includeIfNull JsonAnnotation feature and sets value for it. If null - not set anything. |
 | `default_values_map` | `[]` | `false` | Contains map of types and theirs default values. See [DefaultValueMap](#default-value-map-for-model-generation). |
 | `response_override_value_map` | `[]` | `false` | Contains map of responses and theirs overridden values. See [ResponseOverrideValueMap](#response-override-value-map-for-requests-generation). |
 | `input_folder` | `-` | `true` | Path to folder with .swagger files (for ex. swagger_examples, or lib/swaggers). |
@@ -97,29 +99,6 @@ targets:
       - lib/**
       - swagger_examples/**
       - swaggers/**
-```
-
-### **IncludeIfNull for model generation**
-
-This option is used to add includeIfEmpty annotation for model fields. If option not enabled or empty - includeIfNull annotation will not added to fields. For mode details see [official documentation](https://pub.dev/documentation/json_annotation/latest/json_annotation/JsonSerializable/includeIfNull.html) Please see next example:
-
-```yaml
-targets:
-  $default:
-    builders:
-      swagger_dart_code_generator:
-        options:
-          input_folder: 'lib/swaggers'
-          output_folder: 'lib/generated_code/'
-          include_paths:
-            - "pet/*"
-            - "store/*"
-          exclude_paths:
-            - "exception"
-          include_if_null: NOTE! FOR 2.1.0 and higher use just include_if_null: true/false
-            enabled: true
-            value: false
-          
 ```
 
 ### **Default Value Map for model generation**
@@ -141,6 +120,10 @@ targets:
               default_value: 'default'
             - type_name: 'List<String>'
               default_value: '[]'
+          exclude_paths:
+            - '\/cars\/get'
+          include_paths:
+            - '\/popular\/cars'
 ```
 
 ### **Response Override Value Map for requests generation**
