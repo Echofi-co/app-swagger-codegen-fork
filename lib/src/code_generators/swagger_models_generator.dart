@@ -944,7 +944,7 @@ List<String> ${neededName.camelCase}ListToJson(
   }
 
   return ${neededName.camelCase}
-      .map((e) => enums.\$${neededName}Map[e]!)
+      .map((Object? e) => enums.\$${neededName}Map[e]!)
       .toList();
 }
 
@@ -957,7 +957,7 @@ List<enums.$neededName> ${neededName.camelCase}ListFromJson(
   }
 
   return ${neededName.camelCase}
-      .map((e) => ${neededName.camelCase}FromJson(e.toString()))
+      .map((Object? e) => ${neededName.camelCase}FromJson(e.toString()))
       .toList();
 }
     ''';
