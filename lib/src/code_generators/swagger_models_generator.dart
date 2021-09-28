@@ -376,13 +376,21 @@ abstract class SwaggerModelsGenerator {
     return SwaggerModelsGenerator.getValidatedClassName(result);
   }
 
-  static String generateRequestName(String path, String requestType) {
+  static String generateRequestName(
+    String path,
+    String requestType, {
+    bool useParameterNamesInPath = true,
+  }) {
     if (path == '/') {
       path = '\$';
     }
 
-    path = path.split('{').map((e) => e.capitalize).join();
-    path = path.split('}').map((e) => e.capitalize).join();
+    if (useParameterNamesInPath) {
+      path = path.split('{').map((e) => e.capitalize).join();
+      path = path.split('}').map((e) => e.capitalize).join();
+    } else {
+      path = path.replaceAll(RegExp('{.+?}'), '');
+    }
     path = path.split(',').map((e) => e.capitalize).join();
 
     final correctedPath = SwaggerModelsGenerator.getValidatedClassName(path);

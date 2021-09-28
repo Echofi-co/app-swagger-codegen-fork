@@ -30,58 +30,23 @@ class GeneratorOptions {
   factory GeneratorOptions.fromJson(Map<String, dynamic> json) =>
       _$GeneratorOptionsFromJson(json);
 
-  @JsonKey(defaultValue: true)
   final bool withBaseUrl;
-
-  @JsonKey(defaultValue: true)
   final bool withConverter;
-
-  @JsonKey(defaultValue: true)
   final bool useRequiredAttributeForHeaders;
-
-  @JsonKey(defaultValue: false)
   final bool ignoreHeaders;
-
-  @JsonKey(defaultValue: true)
   final bool useInheritance;
-
-  @JsonKey(defaultValue: false)
   final bool enumsCaseSensitive;
-
-  @JsonKey(defaultValue: null)
   final bool? includeIfNull;
-
-  @JsonKey(defaultValue: '')
   final String inputFolder;
-
-  @JsonKey(defaultValue: '')
   final String outputFolder;
-
-  @JsonKey(defaultValue: false)
   final bool useDefaultNullForLists;
-
-  @JsonKey(defaultValue: false)
   final bool buildOnlyModels;
-
-  @JsonKey(defaultValue: '')
   final String modelPostfix;
-
-  @JsonKey(defaultValue: <DefaultValueMap>[])
   final List<DefaultValueMap> defaultValuesMap;
-
-  @JsonKey(defaultValue: <DefaultHeaderValueMap>[])
   final List<DefaultHeaderValueMap> defaultHeaderValuesMap;
-
-  @JsonKey(defaultValue: <ResponseOverrideValueMap>[])
   final List<ResponseOverrideValueMap> responseOverrideValueMap;
-
-  @JsonKey(defaultValue: [])
   final List<String> includePaths;
-
-  @JsonKey(defaultValue: [])
   final List<String> excludePaths;
-
-  @JsonKey(defaultValue: true)
   final bool useParameterNamesInPath;
 
   /// Convert this options instance to JSON.

@@ -611,7 +611,11 @@ class SwaggerRequestsGenerator {
     required String path,
     required String requestType,
   }) {
-    return SwaggerModelsGenerator.generateRequestName(path, requestType);
+    return SwaggerModelsGenerator.generateRequestName(
+      path,
+      requestType,
+      useParameterNamesInPath: options.useParameterNamesInPath,
+    );
   }
 
   static SwaggerResponse? getSuccessedResponse({
