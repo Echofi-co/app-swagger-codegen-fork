@@ -81,7 +81,7 @@ $maps};
       result.write(chopperPartImport);
     }
     if (hasModels) {
-      result.write("part '$swaggerFileName.swagger.g2.dart';");
+      result.write("part '$swaggerFileName.swagger.g.dart';");
     }
 
     return result.toString();
