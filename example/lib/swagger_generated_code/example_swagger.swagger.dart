@@ -1,8 +1,7 @@
-import 'package:json_annotation/json_annotation.dart';
-import 'package:collection/collection.dart';
-
 import 'package:chopper/chopper.dart';
 import 'package:chopper/chopper.dart' as chopper;
+import 'package:collection/collection.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'example_swagger.swagger.chopper2.dart';
 part 'example_swagger.swagger.g2.dart';

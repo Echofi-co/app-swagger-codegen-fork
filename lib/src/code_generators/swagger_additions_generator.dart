@@ -1,5 +1,5 @@
-import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:recase/recase.dart';
+import 'package:swagger_dart_code_generator/src/definitions.dart';
 import 'package:swagger_dart_code_generator/src/extensions/file_name_extensions.dart';
 import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 
@@ -99,7 +99,7 @@ import 'package:collection/collection.dart';
       result.write(chopperPartImport);
     }
     if (hasModels) {
-      result.write("part '$swaggerFileName.swagger.g.dart';");
+      result.write("part '$swaggerFileName.swagger.g2.dart';");
     }
 
     return result.toString();

@@ -23,6 +23,7 @@ class GeneratorOptions {
     this.modelPostfix = '',
     this.includePaths = const [],
     this.excludePaths = const [],
+    this.useParameterNamesInPath = true,
   });
 
   /// Build options from a JSON map.
@@ -79,6 +80,9 @@ class GeneratorOptions {
 
   @JsonKey(defaultValue: [])
   final List<String> excludePaths;
+
+  @JsonKey(defaultValue: true)
+  final bool useParameterNamesInPath;
 
   /// Convert this options instance to JSON.
   Map<String, dynamic> toJson() => _$GeneratorOptionsToJson(this);
