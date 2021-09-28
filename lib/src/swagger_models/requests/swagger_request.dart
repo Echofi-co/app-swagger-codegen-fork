@@ -19,28 +19,13 @@ class SwaggerRequest {
     this.requestBody,
   });
 
-  @JsonKey(name: 'summary', defaultValue: '')
   String summary;
-
-  @JsonKey(name: 'description', defaultValue: '')
   String description;
-
-  @JsonKey(name: 'operationId', defaultValue: '')
   String operationId;
-
-  @JsonKey(name: 'consumes', defaultValue: [])
   List<String> consumes;
-
-  @JsonKey(name: 'produces', defaultValue: [])
   List<String> produces;
-
-  @JsonKey(name: 'responses', defaultValue: {})
   Map<String, SwaggerResponse> responses;
-
-  @JsonKey(name: 'parameters', defaultValue: [])
   List<SwaggerRequestParameter> parameters;
-
-  @JsonKey(name: 'requestBody')
   RequestBody? requestBody;
 
   Map<String, dynamic> toJson() => _$SwaggerRequestToJson(this);

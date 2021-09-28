@@ -1,5 +1,5 @@
-import 'package:swagger_dart_code_generator/src/swagger_models/requests/swagger_request_parameter.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:swagger_dart_code_generator/src/swagger_models/requests/swagger_request_parameter.dart';
 
 import 'requests/swagger_request.dart';
 
@@ -12,10 +12,8 @@ class SwaggerPath {
     this.parameters = const [],
   });
 
-  @JsonKey(name: 'requests', defaultValue: {})
   Map<String, SwaggerRequest> requests;
 
-  @JsonKey(name: 'parameters', defaultValue: [])
   List<SwaggerRequestParameter> parameters;
 
   Map<String, dynamic> toJson() => _$SwaggerPathToJson(this);

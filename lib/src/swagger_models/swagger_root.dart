@@ -1,3 +1,4 @@
+import 'package:json_annotation/json_annotation.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/constants.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/requests/swagger_request.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/requests/swagger_request_parameter.dart';
@@ -6,49 +7,34 @@ import 'package:swagger_dart_code_generator/src/swagger_models/swagger_component
 import 'package:swagger_dart_code_generator/src/swagger_models/swagger_info.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/swagger_path.dart';
 import 'package:swagger_dart_code_generator/src/swagger_models/swagger_tag.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 part 'swagger_root.g2.dart';
 
 @JsonSerializable()
 class SwaggerRoot {
   SwaggerRoot({
-    required this.basePath,
-    required this.components,
-    required this.info,
-    required this.host,
-    required this.paths,
-    required this.tags,
-    required this.schemes,
-    required this.parameters,
-    required this.definitions,
+    this.info,
+    this.host = '',
+    this.basePath = '',
+    this.tags = const [],
+    this.schemes = const [],
+    this.paths = const {},
+    this.definitions = const {},
+    this.parameters = const {},
+    this.components,
   });
 
-  @JsonKey(name: 'info')
   SwaggerInfo? info;
-
-  @JsonKey(name: 'host', defaultValue: '')
   String host;
-
-  @JsonKey(name: 'basePath', defaultValue: '')
   String basePath;
-
-  @JsonKey(name: 'tags', defaultValue: [])
   List<SwaggerTag> tags;
-
-  @JsonKey(name: 'schemes', defaultValue: [])
   List<String> schemes;
 
-  @JsonKey(name: 'paths', fromJson: _mapPaths)
+  @JsonKey(fromJson: _mapPaths)
   Map<String, SwaggerPath> paths;
 
-  @JsonKey(name: 'definitions', defaultValue: {})
   Map<String, SwaggerSchema> definitions;
-
-  @JsonKey(name: 'parameters', defaultValue: {})
   Map<String, SwaggerRequestParameter> parameters;
-
-  @JsonKey(name: 'components')
   SwaggerComponents? components;
 
   Map<String, dynamic> toJson() => _$SwaggerRootToJson(this);
