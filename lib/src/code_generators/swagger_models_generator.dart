@@ -389,7 +389,22 @@ abstract class SwaggerModelsGenerator {
       path = path.split('{').map((e) => e.capitalize).join();
       path = path.split('}').map((e) => e.capitalize).join();
     } else {
-      path = path.replaceAll(RegExp('{.+?}'), '');
+      final segments = path.split('/');
+      var lastSegment = segments.last;
+      if (lastSegment.startsWith('{') && lastSegment.endsWith('}')) {
+        lastSegment = lastSegment.substring(1, lastSegment.length - 1);
+        for (final suffix in const ['uuid', 'id']) {
+          if (lastSegment.toLowerCase().endsWith(suffix)) {
+            lastSegment =
+                lastSegment.substring(0, lastSegment.length - suffix.length);
+            break;
+          }
+        }
+      }
+      path = segments
+          .take(segments.length - 1)
+          .map((s) => s.replaceAll(RegExp('{.+?}'), ''))
+          .followedBy([lastSegment]).join('/');
     }
     path = path.split(',').map((e) => e.capitalize).join();
 
