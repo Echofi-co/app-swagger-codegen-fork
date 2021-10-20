@@ -1,8 +1,4 @@
-# 2.2.3
-
-* Fixed Issue ([#138](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/138))
-* Fixed Issue ([#269](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/269))
-* Fixed generation of fields with type int32, int64. Parsing it like int
+# 2.2.1+1
 
 * Fixed Issue ([#265](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/265))
 * Fixed generation of responses and request bodies in separate file
