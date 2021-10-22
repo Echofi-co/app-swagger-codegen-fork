@@ -1,9 +1,9 @@
 import 'package:build/build.dart';
+import 'package:dart_style/dart_style.dart';
 import 'package:swagger_dart_code_generator/src/extensions/file_name_extensions.dart';
 import 'package:swagger_dart_code_generator/src/models/generator_options.dart';
 import 'package:swagger_dart_code_generator/src/swagger_code_generator.dart';
 import 'package:universal_io/io.dart';
-import 'package:dart_style/dart_style.dart';
 
 ///Returns instance of SwaggerDartCodeGenerator
 SwaggerDartCodeGenerator swaggerCodeBuilder(BuilderOptions options) =>
@@ -21,6 +21,12 @@ Map<String, List<String>> _generateExtensions(GeneratorOptions options) {
   final filesList = Directory(options.inputFolder).listSync().where(
       (FileSystemEntity file) =>
           _inputFileExtensions.any((ending) => file.path.endsWith(ending)));
+
+  if (filesList.isEmpty) {
+    throw StateError(
+      'No swagger inputs found, make sure a swagger file exist and inputFolder is correct.',
+    );
+  }
 
   final result = <String, List<String>>{};
 
