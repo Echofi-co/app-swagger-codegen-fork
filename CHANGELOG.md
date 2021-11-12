@@ -1,3 +1,26 @@
+# 2.2.3
+
+* Fixed Issue ([#138](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/138))
+* Fixed Issue ([#269](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/269))
+* Fixed generation of fields with type int32, int64. Parsing it like int
+
+* Fixed Issue ([#265](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/265))
+* Fixed generation of responses and request bodies in separate file
+
+# 2.2.1
+
+* Added ability to generated models to separate file
+* **BREAKING** Removed generation of client_index if generate only models
+* Fixed Issue ([#244](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/244))
+
+# 2.2.0+1
+
+* Updated changelog (see previous version changes)
+
+# 2.2.0
+
+* **BREAKING** Upgraded to support json_serializable 5.0.0
+
 # 2.1.3+2
 
 * Fixed Issue ([#245](https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/issues/245))

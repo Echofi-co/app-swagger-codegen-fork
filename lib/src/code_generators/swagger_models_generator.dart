@@ -18,7 +18,6 @@ abstract class SwaggerModelsGenerator {
 
   String generateRequestBodies(
       String dartCode, String fileName, GeneratorOptions options);
-  Map<String, dynamic> getModelProperties(Map<String, dynamic> modelMap);
   String getExtendsString(Map<String, dynamic> map);
   List<String> getAllEnumNames(String swaggerFile);
   List<String> getAllListEnumNames(String swaggerFile);
@@ -309,6 +308,8 @@ abstract class SwaggerModelsGenerator {
     switch (parameter['type'] as String?) {
       case 'integer':
       case 'int':
+      case 'int32':
+      case 'int64':
         return 'int';
       case 'boolean':
         return 'bool';
@@ -1021,7 +1022,7 @@ List<enums.$neededName> ${neededName.camelCase}ListFromJson(
       List<String> allEnumNames,
       List<String> allEnumListNames,
       GeneratorOptions options) {
-    final properties = getModelProperties(map);
+    final properties = getModelProperties(map, schemas);
 
     var extendsString = options.useInheritance ? getExtendsString(map) : '';
 
@@ -1151,5 +1152,65 @@ $copyWithMethod
         .join(',\n');
 
     return 'extension \$${validatedClassName}Extension on $validatedClassName { $validatedClassName copyWith({$spittedPropertiesJoined}) { return $validatedClassName($splittedPropertiesNamesContent);}}';
+  }
+
+  String generateGetHashContent(
+      String generatedProperties, String validatedClassName) {
+    final propertiesHash = generatedProperties
+        .split(';')
+        .where((element) => element.isNotEmpty)
+        .map((e) => e.substring(e.indexOf('final ') + 6))
+        .map((e) => e.substring(e.indexOf(' ') + 1))
+        .map((e) => 'const DeepCollectionEquality().hash($e)')
+        .toList();
+
+    final allHashComponents =
+        [...propertiesHash, 'runtimeType.hashCode'].join(' ^\n');
+
+    return '''
+@override
+int get hashCode =>
+$allHashComponents;
+''';
+  }
+
+  Map<String, dynamic> getModelProperties(
+    Map<String, dynamic> modelMap,
+    Map<String, dynamic> schemas,
+  ) {
+    if (!modelMap.containsKey('allOf')) {
+      return modelMap['properties'] as Map<String, dynamic>? ?? {};
+    }
+
+    final allOf = modelMap['allOf'] as List<dynamic>;
+
+    final newModelMap = allOf.firstWhere(
+      (m) => (m as Map<String, dynamic>).containsKey('properties'),
+      orElse: () => null,
+    );
+
+    if (newModelMap == null) {
+      return {};
+    }
+
+    final currentProperties =
+        newModelMap['properties'] as Map<String, dynamic>? ?? {};
+
+    final allOfRef = allOf.firstWhere(
+      (m) => (m as Map<String, dynamic>).containsKey('\$ref'),
+      orElse: () => null,
+    );
+
+    if (allOfRef != null) {
+      final refString = allOfRef['\$ref'].toString();
+      final schema = schemas[refString.getUnformattedRef()];
+
+      final moreProperties =
+          schema['properties'] as Map<String, dynamic>? ?? {};
+
+      currentProperties.addAll(moreProperties);
+    }
+
+    return currentProperties;
   }
 }
