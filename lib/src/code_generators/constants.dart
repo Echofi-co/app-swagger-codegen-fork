@@ -58,7 +58,7 @@ const kBody = 'body';
 
 const kDynamic = 'dynamic';
 
-const supportedRequestTypes = ['get', 'post', 'put', 'delete', 'head'];
+const supportedRequestTypes = ['get', 'post', 'put', 'delete', 'head', 'patch'];
 
 const kServiceHeader = '''
 // **************************************************************************
