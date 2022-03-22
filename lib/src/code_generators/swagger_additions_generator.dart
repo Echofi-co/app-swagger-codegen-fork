@@ -9,14 +9,14 @@ class SwaggerAdditionsGenerator {
   static const mappingVariableName = 'generatedMapping';
 
   ///Generates index.dart for all generated services
-  String generateIndexes(Map<String, List<String>> buildExtensions) {
-    final importsList = buildExtensions.keys.map((String key) {
-      final fileName = key
-          .split('/')
-          .last
+  String generateIndexes(List<String> fileNames) {
+    final importsList = fileNames.map((key) {
+      final actualFileName = getFileNameBase(key);
+      final fileName = actualFileName
           .replaceAll('-', '_')
-          .replaceAll('.json', '.swagger');
-      final className = getClassNameFromFileName(key.split('/').last);
+          .replaceAll('.json', '.swagger')
+          .replaceAll('.yaml', '.swagger');
+      final className = getClassNameFromFileName(actualFileName);
 
       return 'export \'$fileName.dart\' show $className;';
     }).toList();
@@ -54,8 +54,13 @@ $maps};
   }
 
   ///Generated imports for concrete service
-  String generateImportsContent(String swaggerFileName, bool hasModels,
-      bool buildOnlyModels, bool hasEnums) {
+  String generateImportsContent(
+    String swaggerFileName,
+    bool hasModels,
+    bool buildOnlyModels,
+    bool hasEnums,
+    bool separateModels,
+  ) {
     final result = StringBuffer();
 
     final chopperPartImport =
@@ -75,12 +80,16 @@ $maps};
       ],
     ]));
 
+    if (hasModels && separateModels) {
+      result.write("export '$swaggerFileName.models.swagger.dart';");
+    }
+
     result.write('\n\n');
 
     if (chopperPartImport.isNotEmpty) {
       result.write(chopperPartImport);
     }
-    if (hasModels) {
+    if (hasModels && !separateModels) {
       result.write("part '$swaggerFileName.swagger.g.dart';");
     }
 

@@ -50,4 +50,5 @@ Map<String, dynamic> _$SwaggerRootToJson(SwaggerRoot instance) =>
       'definitions': instance.definitions,
       'parameters': instance.parameters,
       'components': instance.components,
+      'securityDefinitions': instance.securityDefinitions,
     };

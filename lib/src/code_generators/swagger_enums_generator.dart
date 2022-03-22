@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'package:recase/recase.dart';
+import 'package:swagger_dart_code_generator/src/code_generators/constants.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_models_generator.dart';
 import 'package:swagger_dart_code_generator/src/exception_words.dart';
 import 'package:swagger_dart_code_generator/src/extensions/string_extension.dart';
@@ -13,16 +13,15 @@ abstract class SwaggerEnumsGenerator {
   static const String defaultEnumFieldName = 'value_';
   static const String defaultEnumValueName = 'swaggerGeneratedUnknown';
 
-  String generate(String swagger, String fileName);
+  String generate(Map<String, dynamic> map, String fileName);
 
   String generateFromMap(
-      String dartCode,
+      Map<String, dynamic> map,
       String fileName,
       Map<String, dynamic> definitions,
       Map<String, dynamic> responses,
       Map<String, dynamic> requestBodies) {
-    final enumsFromRequests =
-        generateEnumsContentFromRequests(dartCode, fileName);
+    final enumsFromRequests = generateEnumsContentFromRequests(map, fileName);
 
     final enumsFromResponses = generateEnumsFromResponses(responses);
 
@@ -36,9 +35,10 @@ abstract class SwaggerEnumsGenerator {
     final enumsFromClasses = definitions.keys
         .map((String className) {
           return generateEnumsFromClasses(
-              SwaggerModelsGenerator.getValidatedClassName(
-                  className.pascalCase),
-              definitions[className] as Map<String, dynamic>);
+            SwaggerModelsGenerator.getValidatedClassName(className.pascalCase),
+            definitions[className] as Map<String, dynamic>,
+            definitions,
+          );
         })
         .where((element) => element.isNotEmpty)
         .join('\n');
@@ -81,9 +81,10 @@ $enumsFromRequestBodies
           }
 
           return generateEnumsFromClasses(
-              SwaggerModelsGenerator.getValidatedClassName(
-                  className.pascalCase),
-              schema as Map<String, dynamic>);
+            SwaggerModelsGenerator.getValidatedClassName(className.pascalCase),
+            schema as Map<String, dynamic>,
+            {},
+          );
         })
         .where((element) => element.isNotEmpty)
         .join('\n');
@@ -110,9 +111,10 @@ $enumsFromRequestBodies
           }
 
           return generateEnumsFromClasses(
-              SwaggerModelsGenerator.getValidatedClassName(
-                  className.pascalCase),
-              schema as Map<String, dynamic>);
+            SwaggerModelsGenerator.getValidatedClassName(className.pascalCase),
+            schema as Map<String, dynamic>,
+            {},
+          );
         })
         .where((element) => element.isNotEmpty)
         .join('\n');
@@ -138,21 +140,30 @@ $enumsFromRequestBodies
     return neededParameter;
   }
 
-  String generateEnumsContentFromRequests(String swagger, String fileName) {
+  String generateEnumsContentFromRequests(
+      Map<String, dynamic> map, String fileName) {
     final enumNames = <String>[];
     final result = StringBuffer();
-    final map = jsonDecode(swagger) as Map<String, dynamic>;
     final swaggerRoot = SwaggerRoot.fromJson(map);
+
+    final definedParameters = <String, SwaggerRequestParameter>{};
+    definedParameters.addAll(swaggerRoot.parameters);
+    definedParameters.addAll(swaggerRoot.components?.parameters ?? {});
 
     //Link defined parameters with requests
     swaggerRoot.paths.forEach((String path, SwaggerPath swaggerPath) {
       swaggerPath.requests
           .forEach((String requestType, SwaggerRequest swaggerRequest) {
-        swaggerRequest.parameters = swaggerRequest.parameters
-            .map((SwaggerRequestParameter parameter) =>
-                getOriginalOrOverriddenRequestParameter(parameter,
-                    swaggerRoot.components?.parameters.values.toList() ?? []))
-            .toList();
+        swaggerRequest.parameters =
+            swaggerRequest.parameters.map((SwaggerRequestParameter parameter) {
+          if (definedParameters
+              .containsKey(parameter.ref.getUnformattedRef())) {
+            return definedParameters[parameter.ref.getUnformattedRef()]!;
+          }
+
+          return getOriginalOrOverriddenRequestParameter(parameter,
+              swaggerRoot.components?.parameters.values.toList() ?? []);
+        }).toList();
       });
     });
 
@@ -179,8 +190,16 @@ $enumsFromRequestBodies
               swaggerRequestParameter.items?.enumValues ??
               [];
 
+          final isInteger =
+              kIntegerTypes.contains(swaggerRequestParameter.schema?.type) ||
+                  kIntegerTypes.contains(swaggerRequestParameter.items?.type);
+
           if (enumValues.isNotEmpty) {
-            final enumContent = generateEnumContent(name, enumValues);
+            final enumContent = generateEnumContent(
+              name,
+              enumValues,
+              isInteger,
+            );
 
             result.writeln(enumContent);
             enumNames.add(swaggerRequestParameter.name);
@@ -192,8 +211,16 @@ $enumsFromRequestBodies
     return result.toString();
   }
 
-  String generateEnumContent(String enumName, List<String> enumValues) {
-    final enumValuesContent = getEnumValuesContent(enumValues);
+  String generateEnumContent(
+    String enumName,
+    List<String> enumValues,
+    bool isInteger,
+  ) {
+    final enumValuesContent = getEnumValuesContent(
+      enumValues: enumValues,
+      isInteger: isInteger,
+      enumValuesNames: [],
+    );
 
     final enumMap = '''
 \n\tconst \$${enumName}Map = {
@@ -214,28 +241,59 @@ $enumMap
     return result;
   }
 
-  String getEnumValuesContent(List<String> enumValues) {
-    final result = enumValues
-        .map((String enumFieldName) =>
-            "\t@JsonValue('${enumFieldName.replaceAll("\$", "\\\$")}')\n\t${getValidatedEnumFieldName(enumFieldName)}")
-        .join(',\n');
+  String getEnumValuesContent({
+    required List<String> enumValues,
+    required List<String> enumValuesNames,
+    required bool isInteger,
+  }) {
+    final result = <String>[];
+    final resultStrings = <String>[];
 
-    return result;
+    for (int i = 0; i < enumValues.length; i++) {
+      final value = enumValues[i];
+      var validatedValue = value;
+
+      if (enumValuesNames.length == enumValues.length) {
+        validatedValue = enumValuesNames[i];
+      }
+
+      validatedValue = getValidatedEnumFieldName(validatedValue);
+
+      while (result.contains(validatedValue)) {
+        validatedValue += '\$';
+      }
+
+      result.add(validatedValue);
+
+      if (isInteger) {
+        resultStrings.add(
+            "\t@JsonValue(${value.replaceAll("\$", "\\\$")})\n\t$validatedValue");
+      } else {
+        resultStrings.add(
+            "\t@JsonValue('${value.replaceAll("\$", "\\\$")}')\n\t$validatedValue");
+      }
+    }
+
+    return resultStrings.join(',\n');
   }
 
   String getEnumValuesMapContent(String enumName, List<String> enumValues) {
-    final neededValues = <String>[];
-    neededValues.addAll(enumValues);
+    final neededStrings = <String>[];
+    final fields = <String>[];
 
-    final unknownEnumPart = ',\n\t$enumName.swaggerGeneratedUnknown: \'\'';
+    for (var value in enumValues) {
+      var validatedValue = getValidatedEnumFieldName(value);
 
-    final result = neededValues
-            .map((String enumFieldName) =>
-                '\t$enumName.${getValidatedEnumFieldName(enumFieldName)}: \'${enumFieldName.replaceAll('\$', '\\\$')}\'')
-            .join(',\n') +
-        unknownEnumPart;
+      while (fields.contains(validatedValue)) {
+        validatedValue += '\$';
+      }
 
-    return result;
+      fields.add(validatedValue);
+      neededStrings.add(
+          '\t$enumName.$validatedValue: \'${value.replaceAll('\$', '\\\$')}\'');
+    }
+
+    return neededStrings.join(',\n');
   }
 
   static String getValidatedEnumFieldName(String name) {
@@ -261,9 +319,8 @@ $enumMap
     return result.lower;
   }
 
-  static List<String> getEnumNamesFromRequests(String swagger) {
+  static List<String> getEnumNamesFromRequests(Map<String, dynamic> map) {
     final enumNames = <String>[];
-    final map = jsonDecode(swagger) as Map<String, dynamic>;
     final swaggerRoot = SwaggerRoot.fromJson(map);
 
     //Link defined parameters with requests
@@ -316,7 +373,12 @@ $enumMap
 
     final gemeratedEnumsContent = map.keys
         .map((String key) {
-          final enumValuesMap = map[key] as Map<String, dynamic>;
+          final enumValues = map[key];
+
+          final enumValuesMap = enumValues is Map<String, dynamic>
+              ? enumValues
+              : <String, dynamic>{};
+          map[key];
 
           if (enumValuesMap.containsKey('type')) {
             return generateEnumContentIfPossible(
@@ -336,18 +398,39 @@ $enumMap
     enumName = SwaggerModelsGenerator.getValidatedClassName(enumName);
 
     if (map['enum'] != null) {
-      final enumValues = map['enum'] as List<dynamic>;
+      final enumValues =
+          (map['enum'] as List<dynamic>).map((e) => e.toString()).toList();
+
       final stringValues = enumValues.map((e) => e.toString()).toList();
+
+      final enumValuesNames =
+          (map[kEnumNames] ?? map[kEnumVarnames]) as List? ?? [];
+
+      var enumValuesNamesList = <String>[];
+      if (enumValues.isNotEmpty) {
+        enumValuesNamesList = enumValuesNames.map((e) => e.toString()).toList();
+      }
+
+      final mapValues = enumValuesNamesList.length == stringValues.length
+          ? enumValuesNamesList
+          : stringValues;
+
       final enumMap = '''
 \n\tconst \$${enumName}Map = {
-\t${getEnumValuesMapContent(enumName, stringValues)}
+\t${getEnumValuesMapContent(enumName, mapValues)}
       };
       ''';
+
+      final isInteger = kIntegerTypes.contains(map['type']);
 
       return """
 enum ${enumName.capitalize} {
 \t@JsonValue('$defaultEnumValueName')\n  $defaultEnumValueName,
-${generateEnumValuesContent(enumValues)}
+${getEnumValuesContent(
+        enumValues: enumValues,
+        enumValuesNames: enumValuesNamesList,
+        isInteger: isInteger,
+      )}
 }
 
 $enumMap
@@ -361,21 +444,14 @@ $enumMap
   }
 
   String generateEnumName(String className, String enumName) {
-    final validatedEnumName =
-        SwaggerModelsGenerator.getValidatedClassName(enumName);
-    return '${className.capitalize}$validatedEnumName';
-  }
-
-  String generateEnumValuesContent(List<dynamic> values) {
-    return values
-        .map((dynamic e) =>
-            "\t@JsonValue('${e.toString().replaceAll("\$", "\\\$")}')\n  ${getValidatedEnumFieldName(e.toString())}")
-        .join(',\n');
+    return SwaggerModelsGenerator.getValidatedClassName(
+        '${className.capitalize}_$enumName');
   }
 
   String generateEnumsFromClasses(
     String className,
     Map<String, dynamic> map,
+    Map<String, dynamic> schemas,
   ) {
     if (map['enum'] != null) {
       return generateEnumContentIfPossible(map, className);
@@ -399,6 +475,22 @@ $enumMap
             propertiesContainer['properties'] as Map<String, dynamic>? ?? {};
       } else {
         properties = map['properties'] as Map<String, dynamic>? ?? {};
+      }
+
+      var allOfRef = allOf.firstWhereOrNull(
+        (e) => (e as Map<String, dynamic>).containsKey('\$ref'),
+      ) as Map<String, dynamic>?;
+
+      if (allOfRef != null) {
+        final ref = allOfRef['\$ref'] as String;
+
+        final allOfModel =
+            schemas[ref.getUnformattedRef()] as Map<String, dynamic>? ?? {};
+
+        final allOfModelProperties =
+            allOfModel['properties'] as Map<String, dynamic>? ?? {};
+
+        properties.addAll(allOfModelProperties);
       }
     } else {
       properties = map['properties'] as Map<String, dynamic>? ?? {};

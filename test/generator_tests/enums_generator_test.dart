@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_enums_generator.dart';
 //import 'package:swagger_dart_code_generator/src/code_generators/v2/swagger_enums_generator_v2.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/v3/swagger_enums_generator_v3.dart';
@@ -22,8 +24,10 @@ void main() {
     // });
 
     test('Should generate enum from request parameter', () {
-      final result =
-          generator.generate(request_with_enum_in_parameter, 'test_file');
+      final map =
+          jsonDecode(requestWithRnumInParameter) as Map<String, dynamic>;
+      final result = generator.generate(map, 'test_file');
+
       expect(result, contains('enum V3OrderOrderIdStatePutOrderStateRequest'));
     });
 
@@ -37,7 +41,11 @@ void main() {
     test('Should generate enum values', () {
       final values = <String>['file_sup'];
       const output = "\t@JsonValue('file_sup')\n\tfileSup";
-      final result = generator.getEnumValuesContent(values);
+      final result = generator.getEnumValuesContent(
+        enumValues: values,
+        isInteger: false,
+        enumValuesNames: [],
+      );
 
       expect(result, contains(output));
     });
@@ -65,14 +73,15 @@ void main() {
     });
 
     test('Should remove numbers at beginning if it is key word', () {
-      final result =
-          SwaggerEnumsGenerator.getEnumNamesFromRequests(request_with_enum);
+      final map = jsonDecode(requestWithEnum) as Map<String, dynamic>;
+      final result = SwaggerEnumsGenerator.getEnumNamesFromRequests(map);
       expect(result[0], equals('PetsPetIdItemsGetContentType'));
     });
 
     test('Should remove numbers at beginning if it is key word', () {
-      final result = SwaggerEnumsGenerator.getEnumNamesFromRequests(
-          request_with_list_of_enum_in_parameter);
+      final map =
+          jsonDecode(requestWithListOfEnumInParameter) as Map<String, dynamic>;
+      final result = SwaggerEnumsGenerator.getEnumNamesFromRequests(map);
       expect(result[0], equals('V3OrderOrderIdStatePutOrderStateRequest'));
     });
   });
@@ -100,17 +109,6 @@ void main() {
       const enumName = 'cat';
       const expectedResult = 'AnimalCat';
       final result = generator.generateEnumName(className, enumName);
-
-      expect(result, contains(expectedResult));
-    });
-  });
-
-  group('generateEnumValuesContent', () {
-    final generator = SwaggerEnumsGeneratorV3();
-    test('Should return enum values', () {
-      final list = <String>['Cats', 'dogs', 'Forgs'];
-      const expectedResult = "\t@JsonValue('Cats')\n  cats";
-      final result = generator.generateEnumValuesContent(list);
 
       expect(result, contains(expectedResult));
     });

@@ -42,6 +42,7 @@ Map<String, dynamic> _$SwaggerRequestToJson(SwaggerRequest instance) =>
       'consumes': instance.consumes,
       'produces': instance.produces,
       'responses': instance.responses,
+      'security': instance.security,
       'parameters': instance.parameters,
       'requestBody': instance.requestBody,
     };

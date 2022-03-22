@@ -32,6 +32,9 @@ extension TypeExtension on String {
 
   String asList() => 'List<$this>';
 
+  String removeListOrStream() =>
+      replaceAll('List<', '').replaceAll('Stream<', '').replaceAll('>', '');
+
   String asEnum() => 'enums.$this';
 
   String asFutureResponse() => 'Future<chopper.Response<$this>>';

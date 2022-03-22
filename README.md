@@ -10,7 +10,7 @@ Code partially generated with [chopper](https://pub.dev/packages/chopper)
 ![GitHub issues](https://img.shields.io/github/issues-raw/epam-cross-platform-lab/swagger-dart-code-generator?style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/epam-cross-platform-lab/swagger-dart-code-generator?style=flat-square)
 <a href="https://github.com/epam-cross-platform-lab/swagger-dart-code-generator/actions"><img src="https://img.shields.io/github/workflow/status/epam-cross-platform-lab/swagger-dart-code-generator/CI%20for%20master%20branch/master" alt="build"></a>
-<a href="https://discord.gg/fmkN37"><img src="https://img.shields.io/discord/755005482405462017.svg?logo=discord&color=blue" alt="Discord"></a>
+<a href="https://discord.gg/Z6btby6b"><img src="https://img.shields.io/discord/755005482405462017.svg?logo=discord&color=blue" alt="Discord"></a>
 [![codecov](https://codecov.io/gh/epam-cross-platform-lab/swagger-dart-code-generator/branch/master/graph/badge.svg)](https://codecov.io/gh/epam-cross-platform-lab/swagger-dart-code-generator)
 <a href="https://github.com/epam-cross-platform-lab/swagger-dart-code-generator"><img src="https://img.shields.io/github/stars/epam-cross-platform-lab/swagger-dart-code-generator?style=social" alt="Discord"></a>
 
@@ -28,18 +28,20 @@ In general case for each .swagger file three outputs will be created. </br>
 <img src="https://raw.githubusercontent.com/epam-cross-platform-lab/swagger-dart-code-generator/master/assets/overview_image.png" width="320" alt="Bloc" />
 
 ## **Installation**
-Add the following to your `pubspec.yaml` file to be able to do code generation:
-```yaml
-dev_dependencies:
-  chopper_generator: ^3.0.5
-  json_annotation: ^3.0.1
-  json_serializable: ^3.4.1
-  swagger_dart_code_generator: any
-```
 The generated code uses the following packages in run-time:
 ```yaml
 dependencies:
-  chopper: ^3.0.3
+  chopper: ^4.0.1
+  json_annotation: ^4.1.0
+```
+
+Add the following to your `pubspec.yaml` file to be able to do code generation:
+```yaml
+dev_dependencies:
+  build_runner: ^2.1.4
+  chopper_generator: ^4.0.2
+  json_serializable: ^5.0.0
+  swagger_dart_code_generator: any
 ```
 
 Then run:
@@ -74,7 +76,6 @@ targets:
 
 | Option |Default value | Is required | Description |
 | - | - | - | - |
-| `use_inheritance` | `true` | `false` | Enables and disables extends keyword. |
 | `with_base_url` | `true` | `false` | If this option is false, generator will ignore base url in swagger file. |
 | `use_required_attribute_for_headers` | `true` | `false` | If this option is false, generator will not add @required attribute to headers. |
 | `with_converter` | `true` | `false` | If option is true, combination of all mappings will be generated. |
@@ -84,6 +85,7 @@ targets:
 | `exclude_paths` | `[]` | `false` | List<String> of Regex If not empty -exclude paths matching reges |
 | `use_default_null_for_lists` | `false` | `false` | If option is true, default value for lists will be null, otherwise - [] |
 | `build_only_models` | `false` | `false` | If option is true, chopper classes will not be generated. |
+| `separate_models` | `false` | `false` | If option true, generates models into separate file. |
 | `include_if_null` | `null` | `false` | Sets includeIfNull JsonAnnotation feature and sets value for it. If null - not set anything. |
 | `default_values_map` | `[]` | `false` | Contains map of types and theirs default values. See [DefaultValueMap](#default-value-map-for-model-generation). |
 | `response_override_value_map` | `[]` | `false` | Contains map of responses and theirs overridden values. See [ResponseOverrideValueMap](#response-override-value-map-for-requests-generation). |

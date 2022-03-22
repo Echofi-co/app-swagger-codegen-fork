@@ -37,10 +37,28 @@ class SwaggerRoot {
   Map<String, SwaggerRequestParameter> parameters;
   SwaggerComponents? components;
 
+  @JsonKey(name: 'securityDefinitions', fromJson: _mapSecurityDefinitions)
+  Map<String, SwaggerRequestParameter> securityDefinitions;
+
   Map<String, dynamic> toJson() => _$SwaggerRootToJson(this);
 
   factory SwaggerRoot.fromJson(Map<String, dynamic> json) =>
       _$SwaggerRootFromJson(json);
+}
+
+Map<String, SwaggerRequestParameter> _mapSecurityDefinitions(
+    Map<String, dynamic>? definitions) {
+  if (definitions == null) {
+    return {};
+  }
+
+  final definitionsArray = definitions.map((key, value) {
+    final typedValue = value as Map<String, dynamic>;
+
+    return MapEntry(key, SwaggerRequestParameter.fromJson(typedValue));
+  });
+
+  return definitionsArray;
 }
 
 Map<String, SwaggerPath> _mapPaths(Map<String, dynamic>? paths) {

@@ -52,12 +52,14 @@ GeneratorOptions _$GeneratorOptionsFromJson(Map json) => GeneratorOptions(
 
 Map<String, dynamic> _$GeneratorOptionsToJson(GeneratorOptions instance) =>
     <String, dynamic>{
+      'use_path_for_request_names': instance.usePathForRequestNames,
       'with_base_url': instance.withBaseUrl,
       'with_converter': instance.withConverter,
+      'input_urls': instance.inputUrls,
+      'separate_models': instance.separateModels,
       'use_required_attribute_for_headers':
           instance.useRequiredAttributeForHeaders,
       'ignore_headers': instance.ignoreHeaders,
-      'use_inheritance': instance.useInheritance,
       'enums_case_sensitive': instance.enumsCaseSensitive,
       'include_if_null': instance.includeIfNull,
       'input_folder': instance.inputFolder,

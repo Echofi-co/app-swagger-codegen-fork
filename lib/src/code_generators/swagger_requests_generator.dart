@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:recase/recase.dart';
@@ -19,12 +17,11 @@ import 'constants.dart';
 
 class SwaggerRequestsGenerator {
   String generate({
-    required String code,
+    required Map<String, dynamic> map,
     required String className,
     required String fileName,
     required GeneratorOptions options,
   }) {
-    final map = jsonDecode(code) as Map<String, dynamic>;
     final swaggerRoot = SwaggerRoot.fromJson(map);
 
     final service = _generateService(
@@ -186,22 +183,60 @@ class SwaggerRequestsGenerator {
               .add(_getMethodAnnotation(requestType, path, hasOptionalBody))
           ..returns = Reference(returns));
 
-        if (_hasEnumProperties(method)) {
-          final privateMethod = _getPrivateMethod(method);
-          final publicMethod = _getPublicMethod(method);
-          methods.addAll([publicMethod, privateMethod]);
-        } else {
-          methods.add(method);
-        }
+        final allModels = _getAllMethodModels(
+          swaggerRoot,
+          swaggerRequest,
+          returnTypeName,
+        );
+
+        final privateMethod = _getPrivateMethod(method);
+        final publicMethod = _getPublicMethod(method, allModels);
+        methods.addAll([publicMethod, privateMethod]);
       });
     });
 
     return methods;
   }
 
-  bool _hasEnumProperties(Method method) {
-    return method.optionalParameters
-        .any((p) => p.type!.symbol!.startsWith('enums') == true);
+  List<String> _getAllMethodModels(
+    SwaggerRoot root,
+    SwaggerRequest request,
+    String response,
+  ) {
+    final results = <String>[];
+
+    ///Models from parameters
+    for (var parameter in request.parameters) {
+      final ref = parameter.anyRef;
+
+      if (ref.isNotEmpty) {
+        final schema = root.allSchemas[ref.getUnformattedRef()];
+
+        if (schema == null || schema.type != kObject) {
+          continue;
+        }
+
+        results.add(ref.getRef());
+      }
+    }
+
+    //Models from response
+
+    final neededResponse = response.removeListOrStream();
+    if (!kBasicTypes.contains(neededResponse)) {
+      results.add(SwaggerModelsGenerator.getValidatedClassName(neededResponse));
+    }
+
+    return results.where((element) => _isValidModelName(element)).toList();
+  }
+
+  bool _isValidModelName(String modelName) {
+    if (modelName.isEmpty ||
+        kBasicTypes.contains(modelName) ||
+        modelName.startsWith(kMap)) {
+      return false;
+    }
+    return true;
   }
 
   Method _getPrivateMethod(Method method) {
@@ -223,7 +258,7 @@ class SwaggerRequestsGenerator {
     );
   }
 
-  Method _getPublicMethod(Method method) {
+  Method _getPublicMethod(Method method, List<String> allModels) {
     final parameters =
         method.optionalParameters.map((p) => p.copyWith(annotations: []));
 
@@ -233,12 +268,19 @@ class SwaggerRequestsGenerator {
         ..docs.addAll(method.docs)
         ..name = method.name
         ..returns = method.returns
-        ..body = _generatePublicMethodReturn(parameters, method.name!),
+        ..body = _generatePublicMethodCode(
+          parameters,
+          method.name!,
+          allModels,
+        ),
     );
   }
 
-  Code _generatePublicMethodReturn(
-      Iterable<Parameter> parameters, String publicMethodName) {
+  Code _generatePublicMethodCode(
+    Iterable<Parameter> parameters,
+    String publicMethodName,
+    List<String> allModels,
+  ) {
     final parametersListString = parameters.map((p) {
       if (p.type!.symbol!.startsWith('enums.')) {
         final enumName =
@@ -249,7 +291,15 @@ class SwaggerRequestsGenerator {
       return '${p.name} : ${p.name}';
     }).join(', ');
 
-    return Code('return _$publicMethodName($parametersListString);');
+    var allModelsString = '';
+
+    allModels.toSet().forEach((model) {
+      allModelsString +=
+          'generatedMapping.putIfAbsent($model, () => $model.fromJsonFactory);\n';
+    });
+
+    return Code(
+        '$allModelsString\nreturn _$publicMethodName($parametersListString);');
   }
 
   Expression _getMethodAnnotation(
@@ -328,8 +378,8 @@ class SwaggerRequestsGenerator {
         .map((e) => e.replaceAll('}', '').replaceAll('{', '').pascalCase)
         .join();
 
-    final result =
-        '$pathString${requestType.pascalCase}${SwaggerModelsGenerator.getValidatedClassName(parameterName)}';
+    final result = SwaggerModelsGenerator.getValidatedClassName(
+        '$pathString ${requestType.pascalCase} $parameterName');
 
     return result.asEnum();
   }
@@ -340,9 +390,9 @@ class SwaggerRequestsGenerator {
     schemas.addAll(root.definitions);
 
     final refs = [
-      parameter.schema?.items?.ref.getRef(),
-      parameter.schema?.ref.getRef(),
-      parameter.items?.ref.getRef(),
+      parameter.schema?.items?.ref.getUnformattedRef(),
+      parameter.schema?.ref.getUnformattedRef(),
+      parameter.items?.ref.getUnformattedRef(),
     ];
     final schema =
         schemas[refs.firstWhereOrNull((ref) => ref?.isNotEmpty == true)];
@@ -365,19 +415,23 @@ class SwaggerRequestsGenerator {
     required String modelPostfix,
     required SwaggerRoot root,
   }) {
+    final format = parameter.schema?.format ?? '';
+
     if (parameter.inParameter == kHeader) {
-      return _mapParameterName(kString, '');
+      return _mapParameterName(kString, format, '');
     } else if (parameter.items?.enumValues.isNotEmpty == true ||
         parameter.schema?.enumValues.isNotEmpty == true) {
       return _getEnumParameterTypeName(
           parameterName: parameter.name, path: path, requestType: requestType);
     } else if (parameter.items?.type.isNotEmpty == true) {
-      return _mapParameterName(parameter.items!.type, modelPostfix).asList();
+      return _mapParameterName(parameter.items!.type, format, modelPostfix)
+          .asList();
     } else if (parameter.items?.ref.isNotEmpty == true) {
       if (_isEnumRefParameter(parameter, root)) {
         return parameter.items!.ref.getRef().asEnum();
       }
-      return _mapParameterName(parameter.items!.ref.getRef(), modelPostfix)
+      return _mapParameterName(
+              parameter.items!.ref.getRef(), format, modelPostfix)
           .asList();
     } else if (parameter.schema?.items?.ref.isNotEmpty == true) {
       if (_isEnumRefParameter(parameter, root)) {
@@ -389,25 +443,33 @@ class SwaggerRequestsGenerator {
         return parameter.schema!.ref.getRef().asEnum();
       }
 
+      if (_isEnumRef(parameter.schema!.ref.getUnformattedRef(), root)) {
+        return parameter.schema!.ref.getRef().asEnum();
+      }
+
       if (parameter.schema!.items != null || parameter.schema!.type == kArray) {
         return (parameter.schema!.ref.getRef() + modelPostfix).asList();
       }
       return (parameter.schema!.ref.getRef() + modelPostfix);
     } else if (parameter.schema?.type == kArray &&
         parameter.schema?.items?.type.isNotEmpty == true) {
-      return _mapParameterName(parameter.schema!.items!.type, '').asList();
+      return _mapParameterName(parameter.schema!.items!.type, format, '')
+          .asList();
     } else if (parameter.schema?.anyOf.firstOrNull?.type.isNotEmpty == true) {
-      return _mapParameterName(parameter.schema!.anyOf.first.type, '');
+      return _mapParameterName(parameter.schema!.anyOf.first.type, format, '');
     }
 
-    final neededType = parameter.type.isNotEmpty
+    var neededType = parameter.type.isNotEmpty
         ? parameter.type
         : parameter.schema?.type ?? kObject.pascalCase;
 
-    return _mapParameterName(neededType, modelPostfix);
+    return _mapParameterName(neededType, format, modelPostfix);
   }
 
-  String _mapParameterName(String name, String modelPostfix) {
+  String _mapParameterName(String name, String format, String modelPostfix) {
+    if (name == kInteger && format == kInt64) {
+      return kNum;
+    }
     return kBasicTypesMap[name] ?? name.pascalCase + modelPostfix;
   }
 
@@ -425,9 +487,15 @@ class SwaggerRequestsGenerator {
     definedParameters.addAll(root.parameters);
     definedParameters.addAll(root.components?.parameters ?? {});
 
-    final parameters = [...swaggerRequest.parameters, ...swaggerPath.parameters]
-        .map((par) => definedParameters[par.ref.split('/').last] ?? par)
-        .toList();
+    final securityParameters = swaggerRequest.security
+        .map((e) => root.securityDefinitions[e])
+        .whereNotNull();
+
+    final parameters = [
+      ...swaggerRequest.parameters,
+      ...swaggerPath.parameters,
+      ...securityParameters,
+    ].map((par) => definedParameters[par.ref.split('/').last] ?? par).toList();
 
     final result = parameters
         .where((swaggerParameter) =>
@@ -489,6 +557,7 @@ class SwaggerRequestsGenerator {
             schema: schema,
             modelPostfix: options.modelPostfix,
             root: root,
+            requestPath: path + requestType.pascalCase,
           );
         }
       }
@@ -540,7 +609,8 @@ class SwaggerRequestsGenerator {
 
     final neededSchema = schemas[neededSchemaKey]!;
 
-    if (neededSchema.type == kString && neededSchema.enumValues.isNotEmpty) {
+    if ((neededSchema.type == kString || neededSchema.type == kInteger) &&
+        neededSchema.enumValues.isNotEmpty) {
       return true;
     }
 
@@ -551,6 +621,7 @@ class SwaggerRequestsGenerator {
     required SwaggerSchema schema,
     required String modelPostfix,
     required SwaggerRoot root,
+    required String requestPath,
   }) {
     if (schema.type.isNotEmpty) {
       if (schema.type == kArray) {
@@ -571,6 +642,9 @@ class SwaggerRequestsGenerator {
         }
 
         return '';
+      } else if (schema.type == kObject) {
+        return SwaggerModelsGenerator.getValidatedClassName(
+            '$requestPath\$$kRequestBody');
       }
 
       return kBasicTypesMap[schema.type] ?? schema.type;
@@ -658,7 +732,7 @@ class SwaggerRequestsGenerator {
         return null;
       }
 
-      return _mapParameterName(mappedArrayType, modelPostfix).asList();
+      return _mapParameterName(mappedArrayType, '', modelPostfix).asList();
     }
 
     return kBasicTypesMap[responseType] ?? responseType + modelPostfix;
@@ -778,7 +852,24 @@ class SwaggerRequestsGenerator {
           SwaggerModelsGenerator.getValidatedClassName(schemaItemsRef.getRef())
               .withPostfix(modelPostfix)
               .asList();
+
       return result;
+    }
+
+    if (content.schema?.type == kArray) {
+      final itemsType = content.schema?.items?.type ?? '';
+      final itemsFormat = content.schema?.items?.format ?? '';
+
+      if (itemsType == kArray && content.schema?.items?.items?.ref != null) {
+        final itemsItemsType = content.schema?.items?.items?.ref.getRef() ??
+            content.schema?.items?.items?.type ??
+            kObject;
+
+        return itemsItemsType.asList().asList();
+      } else if (itemsType.isNotEmpty) {
+        final parameterType = _mapParameterName(itemsType, itemsFormat, '');
+        return parameterType.asList();
+      }
     }
 
     final contentSchemaType = content.schema?.type ?? '';
@@ -838,4 +929,15 @@ class SwaggerRequestsGenerator {
 
     return '';
   }
+}
+
+extension on SwaggerRequestParameter {
+  String get anyRef => schema?.ref ?? items?.ref ?? schema?.items?.ref ?? ref;
+}
+
+extension on SwaggerRoot {
+  Map<String, SwaggerSchema> get allSchemas => {
+        ...definitions,
+        ...components?.schemas ?? {},
+      };
 }

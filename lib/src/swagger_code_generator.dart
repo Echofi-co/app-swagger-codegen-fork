@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_additions_generator.dart';
-import 'package:swagger_dart_code_generator/src/code_generators/swagger_converter_generator.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_enums_generator.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_models_generator.dart';
 import 'package:swagger_dart_code_generator/src/code_generators/swagger_requests_generator.dart';
@@ -24,79 +21,76 @@ class SwaggerCodeGenerator {
     3: SwaggerModelsGeneratorV3()
   };
 
-  int _getApiVersion(String dartCode) {
-    final dynamic map = jsonDecode(dartCode);
-
+  int _getApiVersion(Map map) {
     final openApi = map['openapi'] as String?;
     return openApi != null ? 3 : 2;
   }
 
-  String generateIndexes(
-          String dartCode, Map<String, List<String>> buildExtensions) =>
-      _getSwaggerAdditionsGenerator(dartCode).generateIndexes(buildExtensions);
+  String generateIndexes(List<String> fileNames) =>
+      _getSwaggerAdditionsGenerator().generateIndexes(fileNames);
 
-  String generateConverterMappings(String dartCode,
-          Map<String, List<String>> buildExtensions, bool hasModels) =>
-      _getSwaggerAdditionsGenerator(dartCode)
-          .generateConverterMappings(buildExtensions, hasModels);
+  String generateConverterMappings(bool hasModels) =>
+      _getSwaggerAdditionsGenerator().generateConverterMappings(hasModels);
 
-  String generateImportsContent(String dartCode, String swaggerFileName,
-          bool hasModels, bool buildOnlyModels, bool hasEnums) =>
-      _getSwaggerAdditionsGenerator(dartCode).generateImportsContent(
-          swaggerFileName, hasModels, buildOnlyModels, hasEnums);
-
-  String generateConverter(
-          String dartCode, String fileName, GeneratorOptions options) =>
-      _getSwaggerConverterGenerator(dartCode)
-          .generate(dartCode, fileName, options);
+  String generateImportsContent(
+    String swaggerFileName,
+    bool hasModels,
+    bool buildOnlyModels,
+    bool hasEnums,
+    bool separateModels,
+  ) =>
+      _getSwaggerAdditionsGenerator().generateImportsContent(swaggerFileName,
+          hasModels, buildOnlyModels, hasEnums, separateModels);
 
   String generateResponses(
-          String dartCode, String fileName, GeneratorOptions options) =>
-      _getSwaggerModelsGenerator(dartCode)
-          .generateResponses(dartCode, fileName, options);
+    Map<String, dynamic> map,
+    String fileName,
+    GeneratorOptions options,
+  ) =>
+      _getSwaggerModelsGenerator(map).generateResponses(map, fileName, options);
 
   String generateRequestBodies(
-          String dartCode, String fileName, GeneratorOptions options) =>
-      _getSwaggerModelsGenerator(dartCode)
-          .generateRequestBodies(dartCode, fileName, options);
+    Map<String, dynamic> map,
+    String fileName,
+    GeneratorOptions options,
+  ) =>
+      _getSwaggerModelsGenerator(map)
+          .generateRequestBodies(map, fileName, options);
 
-  String generateEnums(String dartCode, String fileName) =>
-      _getSwaggerEnumsGenerator(dartCode).generate(dartCode, fileName);
+  String generateEnums(Map<String, dynamic> map, String fileName) =>
+      _getSwaggerEnumsGenerator(map).generate(map, fileName);
 
-  String generateModels(
-          String dartCode, String fileName, GeneratorOptions options) =>
+  String generateModels(Map<String, dynamic> dartCode, String fileName,
+          GeneratorOptions options) =>
       _getSwaggerModelsGenerator(dartCode)
           .generate(dartCode, fileName, options);
 
-  String generateRequests(String dartCode, String className, String fileName,
-          GeneratorOptions options) =>
-      _getSwaggerRequestsGenerator(dartCode).generate(
-        code: dartCode,
+  String generateRequests(Map<String, dynamic> map, String className,
+          String fileName, GeneratorOptions options) =>
+      _getSwaggerRequestsGenerator(map).generate(
+        map: map,
         className: className,
         fileName: fileName,
         options: options,
       );
 
   String generateCustomJsonConverter(
-          String dartCode, String fileName, GeneratorOptions options) =>
-      _getSwaggerAdditionsGenerator(dartCode)
+          String fileName, GeneratorOptions options) =>
+      _getSwaggerAdditionsGenerator()
           .generateCustomJsonConverter(fileName, options);
 
-  String generateDateToJson(String dartCode) =>
-      _getSwaggerAdditionsGenerator(dartCode).generateDateToJson();
+  String generateDateToJson() =>
+      _getSwaggerAdditionsGenerator().generateDateToJson();
 
-  SwaggerAdditionsGenerator _getSwaggerAdditionsGenerator(String dartCode) =>
+  SwaggerAdditionsGenerator _getSwaggerAdditionsGenerator() =>
       SwaggerAdditionsGenerator();
 
-  SwaggerConverterGenerator _getSwaggerConverterGenerator(String dartCode) =>
-      SwaggerConverterGenerator();
+  SwaggerEnumsGenerator _getSwaggerEnumsGenerator(Map root) =>
+      _enumsMap[_getApiVersion(root)]!;
 
-  SwaggerEnumsGenerator _getSwaggerEnumsGenerator(String dartCode) =>
-      _enumsMap[_getApiVersion(dartCode)]!;
+  SwaggerModelsGenerator _getSwaggerModelsGenerator(Map root) =>
+      _modelsMap[_getApiVersion(root)]!;
 
-  SwaggerModelsGenerator _getSwaggerModelsGenerator(String dartCode) =>
-      _modelsMap[_getApiVersion(dartCode)]!;
-
-  SwaggerRequestsGenerator _getSwaggerRequestsGenerator(String dartCode) =>
+  SwaggerRequestsGenerator _getSwaggerRequestsGenerator(Map root) =>
       SwaggerRequestsGenerator();
 }
